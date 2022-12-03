@@ -6,42 +6,50 @@ import lxml.etree as et
 from studio.models import db, WxTokens, WxResponses, WxUserResponses
 from fuzzywuzzy import fuzz
 
-appid = os.getenv("WX_APPID")
-secret = os.getenv("WX_SECRET")
+
 wx_token = os.getenv("WX_TOKEN")
 
 
-def get_wx_access_token():
-    url = f"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={appid}&secret=${secret}"
-    wxToken = db.session.query(WxTokens.access_token, WxTokens.update_time, WxTokens.expires).first()
-    if wxToken:
+def get_wx_access_token(appid, secret):
+    print(appid)
+    print(secret)
+    url = f"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={appid}&secret={secret}"
+    wxToken = db.session.query(WxTokens).first()
+    if wxToken is not None:
+        print("access_token 已经存在")
         cur_time = datetime.datetime.utcnow().timestamp()
         update_time = wxToken.update_time.timestamp()
         expires = wxToken.expires
-        if update_time - cur_time > expires:
+        if cur_time - update_time > expires:
             res = requests.get(url).json()
-            print(res.get("errorcode"))
+            print("access_token 已经过期")
             if res.get("access_token"):
                 # 确保 access_token 不为空
                 wxToken.access_token = res.get("access_token")
-                wxToken.expires = res("expires_in")
+                wxToken.expires = res.get("expires_in")
+                db.session.add(wxToken)
                 db.session.commit()
+                print("access_token 已经更新")
                 return res.get("access_token")
             else:
-                return "Failed"
+                return ""
         else:
+            print("access_token 尚未过期")
             return wxToken.access_token
     else:
+        print("access_token 不存在")
         res = requests.get(url).json()
-        print(res.get("errorcode"))
+        print(res)
         if res.get("access_token"):
             # 确保 access_token 不为空
-            wxToken.access_token = res.get("access_token")
-            wxToken.expires = res("expires_in")
+            access_token = res.get("access_token")
+            expires = res.get("expires_in")
+            wxToken = WxTokens(access_token=access_token, expires=expires)
+            db.session.add(wxToken)
             db.session.commit()
             return res.get("access_token")
         else:
-            return "Failed"
+            return ""
 
 
 def generate_text_response(ToUserName, FromUserName, CreateTime, Content):

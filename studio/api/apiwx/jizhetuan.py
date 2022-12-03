@@ -8,9 +8,9 @@ from studio.models import WxResponses, WxUserResponses, db
 
 jizhetuan = Blueprint("jizhetuan", __name__, url_prefix="/jizhetuan")
 
-appid = os.getenv("WX_APPID")
-secret = os.getenv("WX_SECRET")
-wx_token = os.getenv("WX_TOKEN")
+appid = os.getenv("JIZHETUAN_WX_APPID")
+secret = os.getenv("JIZHETUAN_WX_SECRET")
+wx_token = os.getenv("JIZHETUAN_WX_TOKEN")
 
 
 @jizhetuan.route("/hello", methods=["POST", "GET"])
@@ -125,6 +125,3 @@ def r_recover_response():
     return {"success": True}
 
 
-@jizhetuan.route("/test", methods=["POST", "GET"])
-def r_test():
-    return wx.get_wx_access_token()
