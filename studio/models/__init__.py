@@ -11,5 +11,5 @@ from sqlalchemy.orm import (
 
 from .base import MixinBase, db
 from .enroll import EnrollCandidates, EnrollDepts, EnrollTurns
-from .wx import WxTokens, WxResponses, WxUserResponses
+from .wx import WxTokens, WxResponses, WxUserResponses, WxAppSecret
 from .user import Users, UserGroups

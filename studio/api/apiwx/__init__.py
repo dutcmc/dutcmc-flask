@@ -1,10 +1,10 @@
-import os, base64, requests
+import base64
+import requests
 
-from flask import Blueprint, current_app, request
-from flask_cors import CORS
-from studio.models import db
-from studio.utils import dfl, listf, wx
+from flask import Blueprint, request
 
+from studio.utils import wx
+from studio.models import WxAppSecret, db
 from .jizhetuan import jizhetuan
 
 apiwx = Blueprint("apiwx", __name__, url_prefix="/apiwx")
@@ -15,7 +15,7 @@ apiwx.register_blueprint(jizhetuan)
 def r_get_access_token():
     data = request.get_json()
     appid = data.get("appid")
-    secret = data.get("secret")
+    secret = db.session.query(WxAppSecret).filter(WxAppSecret.appid == appid).first().secret
 
     if appid is None or secret is None:
         return {"success": False, "detail": "参数不足"}
@@ -36,3 +36,4 @@ def r_img_sec_check():
     r = requests.post(f"https://api.weixin.qq.com/wxa/img_sec_check?access_token={token}",
                       files={"media": imgData})
     return r.json()
+

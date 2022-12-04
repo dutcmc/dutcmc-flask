@@ -26,3 +26,8 @@ class WxUserResponses(db.Model, MixinBase):
     openid = db.Column(db.String(128), nullable=False, comment="用户的openid")
     responseId = db.Column(db.Integer, db.ForeignKey("wx_responses.id"), comment="给用户回复的wx_responses表中的id")
 
+
+class WxAppSecret(db.Model, MixinBase):
+    id = db.Column(db.Integer, primary_key=True)
+    appid = db.Column(db.String(1024), nullable=False, comment="微信平台的appid")
+    secret = db.Column(db.String(1024), nullable=False, comment="微信平台的appsecret")
