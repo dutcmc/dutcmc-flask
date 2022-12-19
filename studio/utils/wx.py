@@ -6,7 +6,6 @@ import lxml.etree as et
 from studio.models import db, WxTokens, WxResponses, WxUserResponses
 from fuzzywuzzy import fuzz
 
-
 wx_token = os.getenv("WX_TOKEN")
 
 
@@ -14,7 +13,7 @@ def get_wx_access_token(appid, secret):
     print(appid)
     print(secret)
     url = f"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={appid}&secret={secret}"
-    wxToken = db.session.query(WxTokens).first()
+    wxToken = WxTokens.query.filter(appid == appid).first()
     if wxToken is not None:
         print("access_token 已经存在")
         cur_time = datetime.datetime.utcnow().timestamp()
@@ -44,7 +43,7 @@ def get_wx_access_token(appid, secret):
             # 确保 access_token 不为空
             access_token = res.get("access_token")
             expires = res.get("expires_in")
-            wxToken = WxTokens(access_token=access_token, expires=expires)
+            wxToken = WxTokens(appid=appid, access_token=access_token, expires=expires)
             db.session.add(wxToken)
             db.session.commit()
             return res.get("access_token")

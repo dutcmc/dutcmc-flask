@@ -3,6 +3,7 @@ from .base import MixinBase, db
 
 class WxTokens(db.Model, MixinBase):
     id = db.Column(db.Integer, primary_key=True)
+    appid = db.Column(db.String(1024), nullable=False, comment="APPID")
     access_token = db.Column(db.String(1024), nullable=False, comment="微信的access_token")
     expires = db.Column(db.Integer, nullable=False, comment="access_token的过期时间，单位为秒")
 
