@@ -13,10 +13,10 @@ def get_wx_access_token(appid, secret):
     print(appid)
     print(secret)
     url = f"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={appid}&secret={secret}"
-    wxToken = WxTokens.query.filter(appid == appid).first()
+    wxToken = WxTokens.query.filter(WxTokens.appid == appid).first()
     print(wxToken.appid)
     if wxToken is not None:
-        print(wxToken.access_token, "access_token 已经存在")
+        print("access_token 已经存在")
         cur_time = datetime.datetime.utcnow().timestamp()
         update_time = wxToken.update_time.timestamp()
         expires = wxToken.expires
