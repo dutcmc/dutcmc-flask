@@ -6,9 +6,13 @@ from flask import Blueprint, request
 from studio.utils import wx
 from studio.models import WxAppSecret, db
 from .jizhetuan import jizhetuan
+from .avatar import avatar
+from .secret import secret
 
 apiwx = Blueprint("apiwx", __name__, url_prefix="/apiwx")
 apiwx.register_blueprint(jizhetuan)
+apiwx.register_blueprint(avatar)
+apiwx.register_blueprint(secret)
 
 
 @apiwx.route("/getAccessToken", methods=["POST"])
@@ -36,4 +40,3 @@ def r_img_sec_check():
     r = requests.post(f"https://api.weixin.qq.com/wxa/img_sec_check?access_token={token}",
                       files={"media": imgData})
     return r.json()
-

@@ -32,3 +32,9 @@ class WxAppSecret(db.Model, MixinBase):
     id = db.Column(db.Integer, primary_key=True)
     appid = db.Column(db.String(1024), nullable=False, comment="微信平台的appid")
     secret = db.Column(db.String(1024), nullable=False, comment="微信平台的appsecret")
+
+
+class WxAvatarsImage(db.Model, MixinBase):
+    id = db.Column(db.Integer, primary_key=True)
+    src = db.Column(db.String(1024), nullable=False, comment="图片的URL")
+    selected = db.Column(db.String(32), nullable=False, server_default="unselected", comment="图片是否被选中, 取值为 selected 或 unselected", )

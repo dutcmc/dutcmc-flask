@@ -8,8 +8,9 @@ def global_interceptor():
     # 对于放行类的接口，可以都存储到一个数据表里，这里因为记录少，就不再存了
     allow_startswith = [
         "/apiwx/jizhetuan/hello",  # 微信开放接口
-        "/apiwx/getAccessToken", # 请求 access_token
+        "/apiwx/getAccessToken",  # 请求 access_token
         "/apiwx/imgSecCheck",
+        "/apiwx/avatar",
         "/apivue/enroll/getDepts",  # 报名接口
         "/apivue/enroll/getTurns",  # 报名接口
         "/apivue/enroll/submit",  # 报名接口
