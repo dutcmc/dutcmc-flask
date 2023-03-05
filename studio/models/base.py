@@ -10,3 +10,4 @@ class MixinBase:
     )
     update_cnt = db.Column(db.SmallInteger, nullable=False, server_default=db.text("1"), comment="更新次数")
     deleted = db.Column(db.Boolean, nullable=False, server_default=db.text("0"), comment="删除标记")
+

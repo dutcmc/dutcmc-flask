@@ -24,6 +24,8 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
 
+    app.config["JSON_AS_ASCII"] = False
+
     # 导入 JWT_KEY
     app.config["JWT_KEY"] = os.getenv("JWT_KEY")
     # 初始化插件

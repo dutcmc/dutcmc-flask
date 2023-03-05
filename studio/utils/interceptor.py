@@ -1,11 +1,12 @@
 from flask import current_app, g, request
-from studio.models import Users, db
+from studio.models import Users, db, Routes
 from studio.utils import abort_err, cache
 from studio.utils.jwt import load_token
 
 
 def global_interceptor():
     # 对于放行类的接口，可以都存储到一个数据表里，这里因为记录少，就不再存了
+    allow_startswith = [route.allow_startswith for route in db.session.query(Routes.allow_startswith).all()]
     allow_startswith = [
         "/apiwx/jizhetuan/hello",  # 微信开放接口
         "/apiwx/getAccessToken",  # 请求 access_token
@@ -15,7 +16,8 @@ def global_interceptor():
         "/apivue/enroll/getTurns",  # 报名接口
         "/apivue/enroll/submit",  # 报名接口
         "/apivue/enroll/verifyUnique",
-        "/apivue/login"
+        "/apivue/login",
+        "/apivue/wci"
     ]
     for startswith in allow_startswith:
         if request.path.startswith(startswith):
