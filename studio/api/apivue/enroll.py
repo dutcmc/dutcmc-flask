@@ -4,32 +4,22 @@ import datetime
 from sqlalchemy import or_, and_
 from flask import Blueprint, request, send_file
 from studio.models import EnrollCandidates, EnrollDepts, EnrollTurns, db
-from studio.utils import dfl, listf
+from studio.utils import dfl, dfln, listf
 
 enroll = Blueprint("enroll", __name__, url_prefix="/enroll")
 
 
 @enroll.route("/getDepts", methods=["GET"])
 def r_get_depts():
-    depts = db.session.query(EnrollDepts.id, EnrollDepts.deptName).filter(EnrollDepts.deleted == 0).all()
-    result = []
-    for dept in depts:
-        result.append({
-            "id": dept.id,
-            "deptName": dept.deptName
-        })
+    depts = EnrollDepts.query.filter(EnrollDepts.deleted == 0).all()
+    result = [dfln(row.__dict__, ["_sa_instance_state"]) for row in depts]
     return {"depts": result}
 
 
 @enroll.route("/getDeletedDepts", methods=["GET"])
 def r_get_deleted_depts():
-    depts = db.session.query(EnrollDepts.id, EnrollDepts.deptName).filter(EnrollDepts.deleted == 1).all()
-    result = []
-    for dept in depts:
-        result.append({
-            "id": dept.id,
-            "deptName": dept.deptName
-        })
+    depts = EnrollDepts.query.filter(EnrollDepts.deleted == 1).all()
+    result = [dfln(row.__dict__, ["_sa_instance_state"]) for row in depts]
     return {"depts": result}
 
 
@@ -71,29 +61,15 @@ def r_create_dept():
 
 @enroll.route("/getTurns", methods=["GET"])
 def r_get_turns():
-    turns = db.session.query(EnrollTurns.id, EnrollTurns.turnName, EnrollTurns.activated).filter(
-        EnrollTurns.deleted == 0).all()
-    result = []
-    for turn in turns:
-        result.append({
-            "id": turn.id,
-            "turnName": turn.turnName,
-            "activated": turn.activated
-        })
+    turns = EnrollTurns.query.filter(EnrollTurns.deleted == 0).all()
+    result = [dfln(row.__dict__, ["_sa_instance_state"]) for row in turns]
     return {"turns": result}
 
 
 @enroll.route("/getDeletedTurns", methods=["GET"])
 def r_get_deleted_turns():
-    turns = db.session.query(EnrollTurns.id, EnrollTurns.turnName, EnrollTurns.activated).filter(
-        EnrollTurns.deleted == 1).all()
-    result = []
-    for turn in turns:
-        result.append({
-            "id": turn.id,
-            "turnName": turn.turnName,
-            "activated": turn.activated
-        })
+    turns = EnrollTurns.query.filter(EnrollTurns.deleted == 1).all()
+    result = [dfln(row.__dict__, ["_sa_instance_state"]) for row in turns]
     return {"turns": result}
 
 
@@ -182,27 +158,12 @@ def r_get_enroll_list():
     # if turnData.deleted:
     #     return {"enrollCandidates": []}
     # 开始查询
-    queryData = db.session.query(EnrollCandidates)
+    queryData = EnrollCandidates.query
     if turnId > 0:
         candidates = queryData.filter(EnrollCandidates.turnId == turnId, EnrollCandidates.deleted == 0).all()
     else:
         candidates = queryData.all()
-    result = []
-    for candidate in candidates:
-        result.append({
-            "id": candidate.id,
-            "stuId": candidate.stuId,
-            "name": candidate.name,
-            "sex": candidate.sex,
-            "faculty": candidate.faculty,
-            "tel": candidate.tel,
-            "allowAdjust": candidate.allowAdjust,
-            "firstChoice": candidate.firstChoice,
-            "secondChoice": candidate.secondChoice,
-            "thirdChoice": candidate.thirdChoice,
-            "info": candidate.info,
-            "turnId": candidate.turnId
-        })
+    result = [dfln(row.__dict__, ["_sa_instance_state"]) for row in candidates]
     return {"enrollCandidates": result}
 
 

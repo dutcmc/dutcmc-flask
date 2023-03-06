@@ -3,8 +3,11 @@ from .base import MixinBase, db
 
 class EditorList(db.Model, MixinBase):
     id = db.Column(db.Integer, primary_key=True)
-    editor = db.Column(db.String(20), nullable=False, comment="作者姓名")
-    deptId = db.Column(db.Integer, db.ForeignKey("enroll_depts.id"))
+    stuId = db.Column(db.String(20), nullable=False, comment="学号")
+    editorName = db.Column(db.String(20), nullable=False, comment="作者姓名")
+    faculty = db.Column(db.String(20), nullable=True, comment="学部院")
+    tel = db.Column(db.String(20), nullable=True, comment="联系电话")
+    deptId = db.Column(db.Integer, comment="所属部门ID")
 
 
 class EditorWorks(db.Model, MixinBase):

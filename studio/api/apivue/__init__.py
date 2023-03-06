@@ -6,10 +6,12 @@ from studio.utils.jwt import create_token
 
 from .enroll import enroll
 from .wci import wci
+from .editorFee import editorFee
 
 apivue = Blueprint("apivue", __name__, url_prefix="/apivue")
 apivue.register_blueprint(enroll)
 apivue.register_blueprint(wci)
+apivue.register_blueprint(editorFee)
 
 
 @apivue.route("/login", methods=["POST"])

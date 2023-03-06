@@ -1,0 +1,15 @@
+后端Flask应用操作说明
+1. 拉取最新的代码至服务器 
+git pull origin master
+
+2. 更新数据库结构
+cd dutcmc/flask # 先进入目录
+source venv/bin/activate # 激活 venv 虚拟环境
+flask db upgrade # 对后台来说，直接更新就行
+
+3. 停止Flask运行(需要先激活 venv)
+uwsgi --stop uwsigi.pid
+
+4. 启动Flask(需要先激活venv)
+uwsgi --ini uwsgi.ini
+

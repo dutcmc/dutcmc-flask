@@ -32,7 +32,7 @@ def create_app():
     db.init_app(app)
     cache.init_app(app)
     # 添加数据库迁移
-    migrate = Migrate()
+    migrate = Migrate(render_as_batch=True)
     migrate.init_app(app, db)
     # 添加拦截器, 进行用户鉴权
     app.before_request(global_interceptor)
