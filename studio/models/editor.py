@@ -7,7 +7,7 @@ class EditorList(db.Model, MixinBase):
     editorName = db.Column(db.String(20), nullable=False, comment="作者姓名")
     faculty = db.Column(db.String(20), nullable=True, comment="学部院")
     tel = db.Column(db.String(20), nullable=True, comment="联系电话")
-    deptId = db.Column(db.Integer, comment="所属部门ID")
+    deptId = db.Column(db.Integer, db.ForeignKey("enroll_depts.id"), comment="所属部门ID")
 
 
 class EditorWorks(db.Model, MixinBase):

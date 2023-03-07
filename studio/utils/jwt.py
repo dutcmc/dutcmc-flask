@@ -14,9 +14,8 @@ def create_token(payload):
 
 def load_token(token):
     try:
-        print(token)
         payload = jwt.decode(token, key=current_app.config["JWT_KEY"], algorithms=["HS512"])
-        current_app.logger.info(f"payload: {payload}")
+        # current_app.logger.info(f"payload: {payload}")
         return payload
     except jwt.ExpiredSignatureError:
         # token 过期

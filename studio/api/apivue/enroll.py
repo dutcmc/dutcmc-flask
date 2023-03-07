@@ -164,6 +164,7 @@ def r_get_enroll_list():
     else:
         candidates = queryData.all()
     result = [dfln(row.__dict__, ["_sa_instance_state"]) for row in candidates]
+    result = sorted(result, key=lambda x: x["id"], reverse=True)
     return {"enrollCandidates": result}
 
 
