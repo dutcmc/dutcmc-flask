@@ -3,10 +3,11 @@ from .base import MixinBase, db
 
 class EditorList(db.Model, MixinBase):
     id = db.Column(db.Integer, primary_key=True)
-    stuId = db.Column(db.String(20), nullable=False, comment="学号")
-    editorName = db.Column(db.String(20), nullable=False, comment="作者姓名")
-    faculty = db.Column(db.String(20), nullable=True, comment="学部院")
-    tel = db.Column(db.String(20), nullable=True, comment="联系电话")
+    # 由于数据库迁移发生部分错误，导致下述字段在云数据库中为手动创建，在本地的迁移记录中也不存在这些字段!
+    stuId = db.Column(db.String(20), nullable=False, comment="学号")  # 该字段在云数据库中为手动创建!
+    editorName = db.Column(db.String(20), nullable=False, comment="作者姓名")  # 该字段在云数据库中为手动创建!
+    faculty = db.Column(db.String(20), nullable=True, comment="学部院")  # 该字段在云数据库中为手动创建!
+    tel = db.Column(db.String(20), nullable=True, comment="联系电话")  # 该字段在云数据库中为手动创建!
     deptId = db.Column(db.Integer, db.ForeignKey("enroll_depts.id"), comment="所属部门ID")
 
 
