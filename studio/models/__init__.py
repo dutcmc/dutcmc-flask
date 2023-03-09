@@ -14,4 +14,4 @@ from .enroll import EnrollCandidates, EnrollDepts, EnrollTurns
 from .wx import WxTokens, WxResponses, WxUserResponses, WxAppSecret, WxAvatarsImage
 from .user import Users, UserGroups
 from .routes import Routes
-from .editor import EditorList, EditorWorks
+from .editor import EditorList, EditorWorks, EditorWorkFees

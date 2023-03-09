@@ -39,7 +39,6 @@ def calcWCIEx(tR: int, tZ: int, tL: int, mR: int, mZ: int, mL: int, Rt: int, Zt:
     mZ = np.max([mZ] + [v * w / 100 for v, w in zip(lstZ, lstW)])  # 变更后的在看数最大值
     mL = np.max([mL] + [v * w / 100 for v, w in zip(lstL, lstW)])  # 变更后的点赞数最大值
     # 注意, Rt, Zt, Lt 将不考虑，即所有的附加文章都不会视作头条
-    print(n, tR, tZ, tL, mR, mZ, mL, Rt, Zt, Lt)
 
     O = 0.85 * np.log(tR / d + 1) + 0.09 * np.log(tZ / d * 10 + 1) + 0.06 * np.log(tL / d * 10 + 1)
     A = 0.85 * np.log(tR / n + 1) + 0.09 * np.log(tZ / n * 10 + 1) + 0.06 * np.log(tL / n * 10 + 1)
