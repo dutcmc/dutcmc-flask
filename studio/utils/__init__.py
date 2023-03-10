@@ -25,7 +25,15 @@ def dfln(dictA: dict, lstK: list = []):
 
 
 def listf(lstA: list):
+    """Utils: flat the list, 将列表每一项展开"""
     return [x[0] for x in lstA]
+
+
+def ltd(lstA: list, lstB: list):
+    """Utils: list to dict, 按照 listB 的键名将 listA 的各个值封装为字典"""
+    result = dict()
+    [result.__setitem__(key, value) for key, value in zip(lstB, lstA)]
+    return result
 
 
 def abort_err(code: int, details: str = None, **kwargs):
