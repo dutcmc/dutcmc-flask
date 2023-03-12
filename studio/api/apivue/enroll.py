@@ -162,7 +162,7 @@ def r_get_enroll_list():
     if turnId > 0:
         candidates = queryData.filter(EnrollCandidates.turnId == turnId, EnrollCandidates.deleted == 0).all()
     else:
-        candidates = queryData.all()
+        candidates = queryData.filter(EnrollCandidates.deleted == 0).all()
     result = [dfln(row.__dict__, ["_sa_instance_state"]) for row in candidates]
     result = sorted(result, key=lambda x: x["id"], reverse=True)
     return {"enrollCandidates": result}
