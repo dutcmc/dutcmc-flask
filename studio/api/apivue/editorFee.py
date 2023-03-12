@@ -232,6 +232,9 @@ def r_get_work_fees():
                      for row in db.session.execute(sql).all()]  # 执行全表查询
     queryWorkFees = pd.DataFrame([row for row in totalWorkFees if startDate <= date.fromisoformat(row["workDate"]) <= endDate])
     result = []
+    if queryWorkFees.empty:  # 如果为空，返回空记录
+        return {"success": True, "workFees": []}
+
     for name, group in queryWorkFees.groupby("editorName"):
         result.append({
             "editorName": name,
