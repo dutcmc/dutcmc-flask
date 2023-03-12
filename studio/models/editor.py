@@ -8,6 +8,7 @@ class EditorList(db.Model, MixinBase):
     editorName = db.Column(db.String(20), nullable=False, comment="作者姓名")  # 该字段在云数据库中为手动创建!
     faculty = db.Column(db.String(20), nullable=True, comment="学部院")  # 该字段在云数据库中为手动创建!
     tel = db.Column(db.String(20), nullable=True, comment="联系电话")  # 该字段在云数据库中为手动创建!
+    cardId = db.Column(db.Text, comment="银行卡号")
     deptId = db.Column(db.Integer, db.ForeignKey("enroll_depts.id"), comment="所属部门ID")
 
 

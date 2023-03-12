@@ -2,6 +2,9 @@ from flask import Blueprint, request
 from studio.models import db, EditorList, EditorWorks, EnrollDepts, EditorWorkFees
 from studio.utils import dfln, dfl, ltd
 from datetime import date
+import pandas as pd
+import numpy as np
+
 
 editorFee = Blueprint("editor", __name__, url_prefix="/editorFee")
 
@@ -38,7 +41,7 @@ def r_recover_editor():
 @editorFee.route("/createEditor", methods=["POST"])
 def r_create_editor():
     dictReq = request.get_json()["editor"]
-    editor = EditorList(**dfl(dictReq, ["stuId", "editorName", "faculty", "tel", "deptId"]))
+    editor = EditorList(**dfl(dictReq, ["stuId", "editorName", "faculty", "tel", "cardId", "deptId"]))
     sameEditor = EditorList.query.get(dictReq["stuId"])
     if sameEditor is not None:
         return {"success": False, "detail": "存在学号相同的作者/编辑"}
@@ -64,7 +67,7 @@ def r_set_editor():
 def r_verify_unique_editor():
     dictReq = request.get_json()["editor"]
     id = dictReq.get("id")
-    editor = EditorList.query.filter(EditorList.stuId == dictReq["stuId"]).first()
+    editor = EditorList.query.filter(EditorList.stuId == dictReq["stuId"], EditorList.deleted == 0).first()
     if editor is None:  # 如果找不到匹配的，显然是唯一的，这包括两种情况: 1. 新建的作者 2. 将原有的作者学号修改了
         return {"success": True, "unique": True}
     elif editor.id == id:  # 是同一条编辑记录，这意味着是同一个作者，但是学号变更了
@@ -167,18 +170,6 @@ def r_delete_work():
     return {"success": True}
 
 
-@editorFee.route("/recoverWork", methods=["POST"])
-def r_recover_work():
-    dictReq = request.get_json()["work"]
-    work = EditorWorks.query.get(dictReq["id"])
-    work.deleted = 0
-    fees = EditorWorkFees.query.filter(EditorWorkFees.workId == dictReq["id"]).all()
-    for fee in fees:
-        fee.deleted = 0
-    db.session.commit()
-    return {"success": True}
-
-
 @editorFee.route("/getWorks", methods=["GET"])
 def r_get_works():
     result = []
@@ -186,19 +177,19 @@ def r_get_works():
     works = EditorWorks.query.filter(EditorWorks.deleted == 0).all()
     for work in works:
         # 这里不如写一个 SQL = =
-        authorListSql = f"""select editor_list.stuId, editor_list.editorName, editor_work_fees.workFee 
-                        from editor_work_fees, editor_list 
-                        where editor_work_fees.editorId = editor_list.id 
-                        and editor_work_fees.workId = {work.id}
-                        and editor_work_fees.deleted = 0
-                        and editor_work_fees.editorType = '作者'"""
+        authorListSql = f"""SELECT editor_list.stuId, editor_list.editorName, editor_work_fees.workFee 
+                        FROM editor_work_fees, editor_list 
+                        WHERE editor_work_fees.editorId = editor_list.id 
+                        AND editor_work_fees.workId = {work.id}
+                        AND editor_work_fees.deleted = 0
+                        AND editor_work_fees.editorType = '作者'"""
         authorList = db.session.execute(authorListSql).all()
-        editorListSql = f"""select editor_list.stuId, editor_list.editorName, editor_work_fees.workFee 
-                        from editor_work_fees, editor_list 
-                        where editor_work_fees.editorId = editor_list.id 
-                        and editor_work_fees.workId = {work.id}
-                        and editor_work_fees.deleted = 0
-                        and editor_work_fees.editorType = '编辑'"""
+        editorListSql = f"""SELECT editor_list.stuId, editor_list.editorName, editor_work_fees.workFee 
+                        FROM editor_work_fees, editor_list 
+                        WHERE editor_work_fees.editorId = editor_list.id 
+                        AND editor_work_fees.workId = {work.id}
+                        AND editor_work_fees.deleted = 0
+                        AND editor_work_fees.editorType = '编辑'"""
         editorList = db.session.execute(editorListSql).all()
         result.append({
             **dfln(work.__dict__, ["_sa_instance_state", "workDate"]),
@@ -208,71 +199,47 @@ def r_get_works():
             "editorList": [{**ltd(row, ["stuId", "editorName", "workFee"]),
                             "value": row[0], "label": f"{row[1]}({row[0]})"} for row in editorList],
         })
+    result = sorted(result, key=lambda x: date.fromisoformat(x["workDate"]), reverse=True)
     return {"success": True, "works": result}
 
 
-@editorFee.route("/getDeletedWorks", methods=["GET"])
-def r_get_deleted_works():
-    # 该接口不返回关联的详细信息, 实际上, 该接口将被弃用
-    works = EditorWorks.query.filter(EditorWorks.deleted == 1).all()
-    result = [dlfn(row.__dict__, ["_sa_instance_state"]) for row in works]
-    return {"success": True, "works": result}
-
-
-@editorFee.route("/createWorkFee", methods=["POST"])
-def r_create_work_fee():
-    dictReq = request.get_json()["workFee"]
-    workFee = EditorWorkFees(**dfl(dictReq, ["editorType", "editorId", "workId", "workFee"]))
-    db.session.add(workFee)
-    db.session.commit()
-    return {"success": True}
-
-
-@editorFee.route("/setWorkFee", methods=["POST"])
-def r_set_work_fee():
-    dictReq = request.get_json()["workFee"]
-    workFee = EditorWorkFees.query.get(dictReq["id"])
-    for key, value in dfln(dictReq, ["id"]).items():
-        setattr(workFee, key, value)
-    db.session.commit()
-    return {"success": True}
-
-
-@editorFee.route("/deleteWorkFee", methods=["POST"])
-def r_delete_work_fee():
-    dictReq = request.get_json()["workFee"]
-    workFee = EditorWorkFees.query.get(dictReq["id"])
-    workFee.deleted = 1
-    db.session.commit()
-    return {"success": True}
-
-
-@editorFee.route("/recoverWorkFee", methods=["POST"])
-def r_recover_work_fee():
-    dictReq = request.get_json()["workFee"]
-    workFee = EditorWorkFees.query.get(dictReq["id"])
-    workFee.deleted = 0
-    db.session.commit()
-    return {"success": True}
-
-
-@editorFee.route("/getWorkFees", methods=["GET"])
+@editorFee.route("/getWorkFees", methods=["POST"])
 def r_get_work_fees():
-    # 该接口会进行一次关联查询，仅与 EditorList 表作关联查询
+    # 该接口将按照起始时间和结束时间去查询所有的稿件，并计算稿费
+    dictReq = request.get_json()["data"]
+    startDate = date.fromisoformat(dictReq["startDate"])  # 查询起始时间
+    endDate = date.fromisoformat(dictReq["endDate"])  # 查询结束时间
+    # 注意，不同的数据库语言对时间的比较方法不同，这里写的是全表查询的SQL！存在优化的空间
+    sql = """SELECT
+                editor_works.workName,
+                editor_works.workDate,
+                editor_list.stuId,
+                editor_list.cardId,
+                editor_list.editorName,
+                enroll_depts.deptName,
+                editor_work_fees.workFee,
+                editor_work_fees.editorType 
+            FROM
+                editor_work_fees
+                LEFT JOIN editor_list ON editor_work_fees.editorId = editor_list.id
+                LEFT JOIN editor_works ON editor_work_fees.workId = editor_works.id
+                LEFT JOIN enroll_depts ON editor_list.deptId = enroll_depts.id 
+            WHERE
+                editor_work_fees.deleted = 0 
+            ORDER BY
+                editor_list.stuId DESC"""
+    totalWorkFees = [ltd(row, ["workName", "workDate", "stuId", "cardId", "editorName", "deptName", "workFee", "editorType"])
+                     for row in db.session.execute(sql).all()]  # 执行全表查询
+    queryWorkFees = pd.DataFrame([row for row in totalWorkFees if startDate <= date.fromisoformat(row["workDate"]) <= endDate])
     result = []
-    workFees = EditorWorkFees.query.filter(EditorWorkFees.deleted == 0).all()
-    for workFee in workFees:
-        editor = EditorList.query.filter(EditorList.id == workFee.editorId).first()
+    for name, group in queryWorkFees.groupby("editorName"):
         result.append({
-            **dfl(workFee.__dict__, ["_sa_instance_state"]),
-            **dfl(editor.__dict__, ["_sa_instance_state", "id"])
+            "editorName": name,
+            "totalFees": sum(group["workFee"]),
+            "stuId": group.iloc[0]["stuId"],
+            "deptName": group.iloc[0]["deptName"],
+            "cardId": group.iloc[0]["cardId"],
+            "works": [{"workName": row["workName"], "editorType": row["editorType"], "fee": row["workFee"]}
+                      for _, row in group.iterrows()]
         })
-    return {"success": True}
-
-
-@editorFee.route("/getDeletedWorkFees", methods=["GET"])
-def r_get_deleted_work_fees():
-    # 该接口不返回关联的详细信息
-    workFees = EditorWorkFees.query.filter(EditorWorkFees.deleted == 1).all()
-    result = [dlfn(row.__dict__, ["_sa_instance_state"]) for row in workFees]
     return {"success": True, "workFees": result}
