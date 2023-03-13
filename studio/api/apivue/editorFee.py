@@ -230,7 +230,8 @@ def r_get_work_fees():
                 editor_list.stuId DESC"""
     totalWorkFees = [ltd(row, ["workName", "workDate", "stuId", "cardId", "editorName", "deptName", "workFee", "editorType"])
                      for row in db.session.execute(sql).all()]  # 执行全表查询
-    queryWorkFees = pd.DataFrame([row for row in totalWorkFees if startDate <= date.fromisoformat(row["workDate"]) <= endDate])
+    queryWorkFees = pd.DataFrame([row for row in totalWorkFees if startDate <= date.fromisoformat(str(row["workDate"])) <= endDate])
+    # 注意，这里必须加上 str，以保证兼容性
     result = []
     if queryWorkFees.empty:  # 如果为空，返回空记录
         return {"success": True, "workFees": []}
