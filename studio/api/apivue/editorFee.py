@@ -160,9 +160,9 @@ def r_set_work():
 def r_delete_work():
     dictReq = request.get_json()["work"]
     work = EditorWorks.query.get(dictReq["id"])
-    # 注意，在删除时，仅仅是将 deleted 改为 1，为了确保数据库完整性，还需要将 WorkFees
+    # 注意，这里的处理是进行直接删除！为了确保数据库完整性，还需要将 WorkFees
     # 表的关联记录进行级联修改
-    work.deleted = 1
+    db.session.delete(work)
     fees = EditorWorkFees.query.filter(EditorWorkFees.workId == dictReq["id"]).all()
     for fee in fees:
         db.session.delete(fee)  # 对于关系而言, 没有必要保留历史记录
