@@ -1,9 +1,12 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, send_from_directory
+from pandas import Series
+
 from studio.models import db, EditorList, EditorWorks, EnrollDepts, EditorWorkFees
 from studio.utils import dfln, dfl, ltd
 from datetime import date
 import pandas as pd
 import numpy as np
+import os
 
 
 editorFee = Blueprint("editor", __name__, url_prefix="/editorFee")
@@ -247,3 +250,68 @@ def r_get_work_fees():
                       for _, row in group.iterrows()]
         })
     return {"success": True, "workFees": result}
+
+
+@editorFee.route("/uploadEditorWorks", methods=["POST"])
+def r_upload_editor_works():
+    file = request.files.getlist("file")[0]  # 仅接收一个文件
+    if not os.path.exists("tmp"):
+        os.mkdir("tmp")
+    filename = file.filename
+    file.save(f"tmp/{filename}")
+    data = pd.read_excel(f"tmp/{filename}")
+    data.fillna("", inplace=True)
+    os.remove(f"tmp/{filename}")
+
+    totalNotFoundLst = []
+    totalWork = []
+    try:
+        # 先校验是否编辑/作者都在数据库
+        for _, row in data.iterrows():
+            workAuthors = [name.strip() for name in row["作者列表"].split(",") if name.strip() != '']
+            workEditors = [name.strip() for name in row["编辑列表"].split(",") if name.strip() != '']
+            if len(workAuthors) + len(workEditors) == 0:
+                return {"success": False, "detail": "作者和编辑数量为0！导入失败!"}
+            if row["作者列表"].find("，") > -1 or row["编辑列表"].find("，") > -1:
+                return {"success": False, "detail": "在字段中发现中文逗号, 导入失败!"}
+
+            notFoundEditors = []
+            for name in list(set(workAuthors + workEditors)):
+                if EditorList.query.filter(EditorList.editorName == name).first() is None:
+                    notFoundEditors.append(name)
+            totalNotFoundLst += notFoundEditors
+        if len(totalNotFoundLst) > 0:
+            return {"success": False, "detail": f"下述编者尚未在数据库中，请先添加至数据库\n{list(set(totalNotFoundLst))}"}
+
+        for _, row in data.iterrows():
+            workFee = row["总稿酬"]
+            work = EditorWorks(workName=row["稿件名称"], workDate=row["发布时间"], workFee=workFee, note=str(row["备注"]))
+            db.session.add(work)
+            totalWork.append(work)
+
+            workAuthors = [name.strip() for name in row["作者列表"].split(",") if name.strip() != '']
+            workEditors = [name.strip() for name in row["编辑列表"].split(",") if name.strip() != '']
+
+            authorPerFee = work.workFee * 0.8 / len(workAuthors)
+            editorPerFee = work.workFee * 0.2 / len(workEditors)
+            for workAuthor in workAuthors:
+                author = EditorList.query.filter(EditorList.editorName == workAuthor).first()
+                workFee = EditorWorkFees(editorType="作者", editorId=author.id, workId=work.id, workFee=authorPerFee)
+                db.session.add(workFee)
+            for workEditor in workEditors:
+                editor = EditorList.query.filter(EditorList.editorName == workEditor).first()
+                workFee = EditorWorkFees(editorType="编辑", editorId=editor.id, workId=work.id, workFee=editorPerFee)
+                db.session.add(workFee)
+        db.session.commit()
+    except KeyError as ke:
+        return {"success": False, "detail": f"缺少字段 [{ke.args[0]}]"}
+    except Exception as e:
+        print(e.with_traceback())
+        return {"success": False, "detail": f"出现错误 [{e.args}]"}
+    return {"success": True, "data": {"num": len(totalWork)}}
+
+
+@editorFee.route("/getUploadExampleFile", methods=["GET"])
+def r_get_upload_example_file():
+    # 这里需要添加放行路由 /apivue/editorFees/getUploadExampleFile
+    return send_from_directory(os.getcwd() + "/examples", "example-editor-works.xlsx", as_attachment=True)
