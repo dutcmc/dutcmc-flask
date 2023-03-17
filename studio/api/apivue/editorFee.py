@@ -8,7 +8,6 @@ import pandas as pd
 import numpy as np
 import os
 
-
 editorFee = Blueprint("editor", __name__, url_prefix="/editorFee")
 
 
@@ -143,7 +142,7 @@ def r_set_work():
             stuId = workAuthor["option"]["stuId"]
         else:
             stuId = workAuthor["stuId"]
-        author = EditorList.query.filter(EditorList.stuId == stuId).first()
+        author = EditorList.query.filter(EditorList.stuId == stuId, EditorList.deleted == 0).first()
         workFee = EditorWorkFees(editorType="作者", editorId=author.id, workId=work.id, workFee=authorPerFee)
         db.session.add(workFee)
     for workEditor in workEditors:
@@ -152,7 +151,7 @@ def r_set_work():
             stuId = workEditor["option"]["stuId"]
         else:
             stuId = workEditor["stuId"]
-        editor = EditorList.query.filter(EditorList.stuId == stuId).first()
+        editor = EditorList.query.filter(EditorList.stuId == stuId, EditorList.deleted == 0).first()
         workFee = EditorWorkFees(editorType="编辑", editorId=editor.id, workId=work.id, workFee=editorPerFee)
         db.session.add(workFee)
     db.session.commit()
@@ -231,9 +230,11 @@ def r_get_work_fees():
                 editor_work_fees.deleted = 0 
             ORDER BY
                 editor_list.stuId DESC"""
-    totalWorkFees = [ltd(row, ["workName", "workDate", "stuId", "cardId", "editorName", "deptName", "workFee", "editorType"])
-                     for row in db.session.execute(sql).all()]  # 执行全表查询
-    queryWorkFees = pd.DataFrame([row for row in totalWorkFees if startDate <= date.fromisoformat(str(row["workDate"])) <= endDate])
+    totalWorkFees = [
+        ltd(row, ["workName", "workDate", "stuId", "cardId", "editorName", "deptName", "workFee", "editorType"])
+        for row in db.session.execute(sql).all()]  # 执行全表查询
+    queryWorkFees = pd.DataFrame(
+        [row for row in totalWorkFees if startDate <= date.fromisoformat(str(row["workDate"])) <= endDate])
     # 注意，这里必须加上 str，以保证兼容性
     result = []
     if queryWorkFees.empty:  # 如果为空，返回空记录
@@ -271,9 +272,9 @@ def r_upload_editor_works():
             workAuthors = [name.strip() for name in row["作者列表"].split(",") if name.strip() != '']
             workEditors = [name.strip() for name in row["编辑列表"].split(",") if name.strip() != '']
             if len(workAuthors) + len(workEditors) == 0:
-                return {"success": False, "detail": "作者和编辑数量为0！导入失败!"}
+                return {"success": False, "detail": f"{row['稿件名称']}: 作者和编辑数量为0！导入失败!"}
             if row["作者列表"].find("，") > -1 or row["编辑列表"].find("，") > -1:
-                return {"success": False, "detail": "在字段中发现中文逗号, 导入失败!"}
+                return {"success": False, "detail": f"{row['稿件名称']}: 在字段中发现中文逗号, 导入失败!"}
 
             notFoundEditors = []
             for name in list(set(workAuthors + workEditors)):
@@ -281,11 +282,13 @@ def r_upload_editor_works():
                     notFoundEditors.append(name)
             totalNotFoundLst += notFoundEditors
         if len(totalNotFoundLst) > 0:
-            return {"success": False, "detail": f"下述编者尚未在数据库中，请先添加至数据库\n{list(set(totalNotFoundLst))}"}
+            return {"success": False,
+                    "detail": f"下述编者尚未在数据库中，请先添加至数据库\n{', '.join(list(set(totalNotFoundLst)))}"}
 
         for _, row in data.iterrows():
             workFee = row["总稿酬"]
-            work = EditorWorks(workName=row["稿件名称"], workDate=row["发布时间"], workFee=workFee, note=str(row["备注"]))
+            work = EditorWorks(workName=row["稿件名称"], workDate=row["发布时间"], workFee=workFee,
+                               note=str(row["备注"]))
             db.session.add(work)
             totalWork.append(work)
 
@@ -295,23 +298,80 @@ def r_upload_editor_works():
             authorPerFee = work.workFee * 0.8 / len(workAuthors)
             editorPerFee = work.workFee * 0.2 / len(workEditors)
             for workAuthor in workAuthors:
-                author = EditorList.query.filter(EditorList.editorName == workAuthor).first()
+                author = EditorList.query.filter(EditorList.editorName == workAuthor, EditorList.deleted == 0).first()
                 workFee = EditorWorkFees(editorType="作者", editorId=author.id, workId=work.id, workFee=authorPerFee)
                 db.session.add(workFee)
             for workEditor in workEditors:
-                editor = EditorList.query.filter(EditorList.editorName == workEditor).first()
+                editor = EditorList.query.filter(EditorList.editorName == workEditor, EditorList.deleted == 0).first()
                 workFee = EditorWorkFees(editorType="编辑", editorId=editor.id, workId=work.id, workFee=editorPerFee)
                 db.session.add(workFee)
         db.session.commit()
     except KeyError as ke:
         return {"success": False, "detail": f"缺少字段 [{ke.args[0]}]"}
     except Exception as e:
-        print(e.with_traceback())
+        print(e)
         return {"success": False, "detail": f"出现错误 [{e.args}]"}
     return {"success": True, "data": {"num": len(totalWork)}}
 
 
-@editorFee.route("/getUploadExampleFile", methods=["GET"])
-def r_get_upload_example_file():
-    # 这里需要添加放行路由 /apivue/editorFees/getUploadExampleFile
+@editorFee.route("/getUploadEditorWorksFile", methods=["GET"])
+def r_get_upload_editor_works_file():
+    # 这里需要添加放行路由 /apivue/editorFees/getUpload
     return send_from_directory(os.getcwd() + "/examples", "example-editor-works.xlsx", as_attachment=True)
+
+
+@editorFee.route("/uploadEditors", methods=["POST"])
+def r_upload_editors():
+    file = request.files.getlist("file")[0]  # 仅接收一个文件
+    if not os.path.exists("tmp"):
+        os.mkdir("tmp")
+    filename = file.filename
+    file.save(f"tmp/{filename}")
+    data = pd.read_excel(f"tmp/{filename}", dtype=str)
+    data.fillna("", inplace=True)
+    os.remove(f"tmp/{filename}")
+
+    totalEditor = []
+    totalNotFoundLst = []
+    totalDuplicateLst = []
+    try:
+        # 先校验一下是否有重复的学号，部门是否关联
+        for _, row in data.iterrows():
+            stuId = row["学号"]
+            deptName = row["所属部门"]
+            # 出现重复
+            if EditorList.query.filter(EditorList.stuId == stuId, EditorList.deleted == 0).first() is not None:
+                totalDuplicateLst.append(row["姓名"])
+            # 部门不匹配
+            if EnrollDepts.query.filter(EnrollDepts.deptName == deptName, EnrollDepts.deleted == 0) is None:
+                totalNotFoundLst.append(row["所属部门"])
+
+        print(totalDuplicateLst, totalNotFoundLst)
+        detail = ""
+        if len(totalDuplicateLst) > 0:
+            detail += f"下述编者的学号出现重复, 请删除后再次上传!\n{', '.join(totalDuplicateLst)}\n"
+        if len(totalNotFoundLst) > 0:
+            detail += f"下述部门不存在，请在报名管理添加对应部门后再上传!\n{', '.join(totalNotFoundLst)}"
+        if len(totalNotFoundLst) > 0 or len(totalDuplicateLst) > 0:
+            return {"success": False, "detail": detail}
+
+        # 数据校验无误，开始添加
+        for _, row in data.iterrows():
+            deptId = EnrollDepts.query.filter(EnrollDepts.deptName == row["所属部门"]).first().id
+            editor = EditorList(stuId=row["学号"], editorName=row["姓名"], faculty=row["学院"], tel=row["电话"],
+                                cardId=row["银行卡号"], deptId=deptId)
+            totalEditor.append(editor)
+            db.session.add(editor)
+        db.session.commit()
+    except KeyError as ke:
+        return {"success": False, "detail": f"缺少字段 [{ke.args[0]}]"}
+    except Exception as e:
+        print(e)
+        return {"success": False, "detail": f"出现错误 [{e.args}]"}
+    return {"success": True, "data": {"num": len(totalEditor)}}
+
+
+@editorFee.route("/getUploadEditorsFile", methods=["GET"])
+def r_get_upload_editors_file():
+    # 这里需要添加放行路由 /apivue/editorFees/getUpload
+    return send_from_directory(os.getcwd() + "/examples", "example-editors.xlsx", as_attachment=True)
