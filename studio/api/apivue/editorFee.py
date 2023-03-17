@@ -375,3 +375,13 @@ def r_upload_editors():
 def r_get_upload_editors_file():
     # 这里需要添加放行路由 /apivue/editorFees/getUpload
     return send_from_directory(os.getcwd() + "/examples", "example-editors.xlsx", as_attachment=True)
+
+
+@editorFee.route("/getUploadEditorsNote", methods=["GET"])
+def r_get_upload_editor_note():
+    return send_from_directory(os.getcwd() + "/examples", "note-example-editors.txt", as_attachment=True)
+
+
+@editorFee.route("/getUploadEditorWorksNote", methods=["GET"])
+def r_get_upload_editor_works_note():
+    return send_from_directory(os.getcwd() + "/examples", "note-example-editor-works.txt", as_attachment=True)
