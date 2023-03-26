@@ -15,3 +15,4 @@ from .wx import WxTokens, WxResponses, WxUserResponses, WxAppSecret, WxAvatarsIm
 from .user import Users, UserGroups
 from .routes import Routes
 from .editor import EditorList, EditorWorks, EditorWorkFees
+from .arModel import ArModel

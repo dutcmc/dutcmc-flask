@@ -24,7 +24,7 @@ def dfln(dictA: dict, lstK: list = []):
     return {k: v for k, v in dictA.items() if k not in lstK}
 
 
-def listf(lstA: list):
+def ltf(lstA: list):
     """Utils: flat the list, 将列表每一项展开"""
     return [x[0] for x in lstA]
 

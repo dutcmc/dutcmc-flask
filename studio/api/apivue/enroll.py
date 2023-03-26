@@ -4,7 +4,7 @@ import datetime
 from sqlalchemy import or_, and_
 from flask import Blueprint, request, send_file
 from studio.models import EnrollCandidates, EnrollDepts, EnrollTurns, db
-from studio.utils import dfl, dfln, listf
+from studio.utils import dfl, dfln, ltf
 
 enroll = Blueprint("enroll", __name__, url_prefix="/enroll")
 
