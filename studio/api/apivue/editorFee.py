@@ -295,13 +295,18 @@ def r_upload_editor_works():
             workAuthors = [name.strip() for name in row["作者列表"].split(",") if name.strip() != '']
             workEditors = [name.strip() for name in row["编辑列表"].split(",") if name.strip() != '']
 
-            authorPerFee = work.workFee * 0.8 / len(workAuthors)
-            editorPerFee = work.workFee * 0.2 / len(workEditors)
+            # 如果存在编辑，则作者权重为 1 - 0.2 = 0.8
+            totalAuthorsFee = work.workFee * (1 - (len(workEditors) > 0) * 0.2)
+            # 如果存在作者, 则编辑权重为 1 - 0.8  = 0.2
+            totalEditorsFee = work.workFee * (1 - (len(workAuthors) > 0) * 0.8)
+
             for workAuthor in workAuthors:
+                authorPerFee = totalAuthorsFee / len(workAuthors)
                 author = EditorList.query.filter(EditorList.editorName == workAuthor, EditorList.deleted == 0).first()
                 workFee = EditorWorkFees(editorType="作者", editorId=author.id, workId=work.id, workFee=authorPerFee)
                 db.session.add(workFee)
             for workEditor in workEditors:
+                editorPerFee = totalEditorsFee / len(workEditors)
                 editor = EditorList.query.filter(EditorList.editorName == workEditor, EditorList.deleted == 0).first()
                 workFee = EditorWorkFees(editorType="编辑", editorId=editor.id, workId=work.id, workFee=editorPerFee)
                 db.session.add(workFee)
@@ -309,7 +314,7 @@ def r_upload_editor_works():
     except KeyError as ke:
         return {"success": False, "detail": f"缺少字段 [{ke.args[0]}]"}
     except Exception as e:
-        print(e)
+        print(e.with_traceback())
         return {"success": False, "detail": f"出现错误 [{e.args}]"}
     return {"success": True, "data": {"num": len(totalWork)}}
 
