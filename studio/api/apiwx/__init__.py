@@ -9,12 +9,14 @@ from .jizhetuan import jizhetuan
 from .avatar import avatar
 from .secret import secret
 from .arModel import arModel
+from .getWerunData import werun
 
 apiwx = Blueprint("apiwx", __name__, url_prefix="/apiwx")
 apiwx.register_blueprint(jizhetuan)
 apiwx.register_blueprint(avatar)
 apiwx.register_blueprint(secret)
 apiwx.register_blueprint(arModel)
+apiwx.register_blueprint(werun)
 
 
 @apiwx.route("/getAccessToken", methods=["POST"])

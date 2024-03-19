@@ -10,5 +10,5 @@ def r_get_avatar_images():
     avatarImages = WxAvatarsImage.query.all()
     result = []
     for avatarImage in avatarImages:
-        result.append({"src": avatarImage.src, "selected": avatarImage.selected})
+        result.append({"id": avatarImage.id, "src": avatarImage.src, "selected": avatarImage.selected, "iswide": avatarImage.isWide})
     return {"imgList": result, "imgCount": len(avatarImages)}
