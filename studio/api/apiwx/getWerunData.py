@@ -1,5 +1,8 @@
 from flask import Blueprint, request
 import requests
+from studio.models import WxgetWerunData, db
+from sqlalchemy import or_, and_
+import datetime
 import json
 from studio.models import WxgetWerunData
 
@@ -35,7 +38,7 @@ class WXBizDataCrypt:
 @werun.route('hello')
 def hello():
     return "hello world!"
-@werun.route("/login", methods=["GET", "POST"])
+@werun.route("/login", methods=["POST"])
 def login():
     data = request.json
     code = data["code"]
@@ -53,20 +56,37 @@ def login():
     resData = response_data.json()
     openid = resData['openid']  # 得到用户关于当前小程序的OpenID
     session_key = resData['session_key']  # 得到用户关于当前小程序的会话密钥session_key
+    global user
+    user = WxgetWerunData(openid=openid, step=0)
+    user_query = db.session.query(WxgetWerunData).filter(WxgetWerunData.openid == openid).first()
+    print(user_query, type(user_query))
+    if user_query is None:
+        print("添加新用户……")
+        db.session.add(user)
+        db.session.commit()
+    else:
+        print("用户已存在！")
+        user = user_query
     reply = "code:" + code + "  openid:" + openid + " session_key:" + session_key
     print(reply)
     return reply
 
-@werun.route('/encrydata', methods=["GET","POST"])
+@werun.route('/encrydata', methods=["POST"])
 def encrydata():
     data = request.json
     unencryeddata = data["unencryeddata"]
     iv = data["iv"]
-
     pc = WXBizDataCrypt('wxbd72b81f421cef8d', session_key)
 
     stepdata = pc.decrypt(unencryeddata, iv)
+    global step
     step = stepdata['stepInfoList'][-1]['step']
-    print(step)
+    print("步数更新成功！")
     return json.dumps(step)
 
+@werun.route('/support', methods=["GET"])
+def support():
+    WxgetWerunData.query.filter(WxgetWerunData.openid == openid).update({"step": int(step)})
+    db.session.commit()
+    print("步数已计入！")
+    return {"success": True}

@@ -38,9 +38,10 @@ class WxAvatarsImage(db.Model, MixinBase):
     id = db.Column(db.Integer, primary_key=True)
     src = db.Column(db.String(1024), nullable=False, comment="图片的URL")
     selected = db.Column(db.String(32), nullable=False, server_default="unselected", comment="图片是否被选中, 取值为 selected 或 unselected", )
-    isWide = db.Column(db.Integer, nullable=False, comment="对头像框宽窄类型分类")
+    isWide = db.Column(db.Integer, nullable=False, server_default="0", comment="对头像框宽窄类型分类")
 
 
 class WxgetWerunData(db.Model, MixinBase):
     id = db.Column(db.Integer, primary_key=True)
+    openid = db.Column(db.String(32), nullable=False, comment='用户的openid')
     step = db.Column(db.Integer, nullable=False, comment='运动步数')
