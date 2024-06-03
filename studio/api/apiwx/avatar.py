@@ -20,3 +20,11 @@ def r_get_avatar_images_415():
     for avatarImage in avatarImages:
         result.append({"id": avatarImage.id, "src": avatarImage.src, "selected": avatarImage.selected, "iswide": avatarImage.isWide})
     return {"imgList": result, "imgCount": len(avatarImages)}
+
+@avatar.route("/getAvatarImages_dlmu", methods=["GET"])
+def r_get_avatar_images_dlmu():
+    avatarImages = WxAvatarsImage_dlmu.query.all()
+    result = []
+    for avatarImage in avatarImages:
+        result.append({"id": avatarImage.id, "src": avatarImage.src, "selected": avatarImage.selected, "iswide": avatarImage.isWide})
+    return {"imgList": result, "imgCount": len(avatarImages)}
