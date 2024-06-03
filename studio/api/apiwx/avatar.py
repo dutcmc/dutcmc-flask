@@ -1,6 +1,6 @@
 from flask import Blueprint, request
 
-from studio.models import WxAvatarsImage,WxAvatarsImage_415
+from studio.models import WxAvatarsImage, WxAvatarsImage_415, WxAvatarsImage_dlmu
 
 avatar = Blueprint("avatar", __name__, url_prefix="/avatar")
 
