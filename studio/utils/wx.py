@@ -19,6 +19,9 @@ def get_wx_access_token(appid, secret):
         cur_time = datetime.datetime.utcnow().timestamp()
         update_time = wxToken.update_time.timestamp()
         expires = wxToken.expires
+        print("current:"+cur_time)
+        print("update:"+update_time)
+        print("expires:"+expires)
         if cur_time - update_time > expires:
             res = requests.get(url).json()
             print("access_token 已经过期")
