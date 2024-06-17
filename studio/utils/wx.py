@@ -16,7 +16,7 @@ def get_wx_access_token(appid, secret):
     wxToken = WxTokens.query.filter(WxTokens.appid == appid).first()
     if wxToken is not None:
         print("access_token 已经存在")
-        cur_time = datetime.datetime.utcnow().timestamp()
+        cur_time = datetime.datetime.utcnow().timestamp() + 28800.0
         update_time = wxToken.update_time.timestamp()
         expires = wxToken.expires
         print("current:"+str(cur_time))
